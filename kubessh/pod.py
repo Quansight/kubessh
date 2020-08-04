@@ -60,6 +60,11 @@ class UserPod(LoggingConfigurable):
                         "tty": True,
                     }
                 ],
+                "securityContext": {
+                    "fsgroup": 0
+                    "runAsGroup": 0
+                    "runAsUser": 0,
+                },
             },
         },
         help="""
@@ -107,6 +112,14 @@ class UserPod(LoggingConfigurable):
 
         Auto-generated to be 'ssh-{username}' if not set.
         """,
+    )
+
+    user_mappings = List(
+        [],
+        help="""
+        List of templates for detecting user group for running in SecurityContext.
+        """,
+        config=True
     )
 
     @default('pod_name')
@@ -170,6 +183,11 @@ class UserPod(LoggingConfigurable):
 
     def make_pod_spec(self):
         pod = make_api_object_from_dict(self._expand_all(self.pod_template), k.V1Pod)
+        pod.spec.securityContext = {}
+        if self.user_mappings is not None:
+            pod.spec.securityContext['fsgroup'] = self.user_mappings[self.username]['fsgroup']
+            pod.spec.securityContext['runAsGroup'] = self.user_mappings[self.username]['runAsGroup']
+            pod.spec.securityContext['runAsUser'] = self.user_mappings[self.username]['runAsUser']
         pod.metadata.name = self.pod_name
 
         if pod.metadata.labels is None:

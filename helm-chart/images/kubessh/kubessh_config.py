@@ -30,3 +30,6 @@ if 'podTemplate' in config:
 
 if 'pvcTemplates' in config:
     c.UserPod.pvc_templates = config['pvcTemplates']
+
+if 'userMappings' in config:
+    c.UserPod.user_mappings = config['userMappings']
