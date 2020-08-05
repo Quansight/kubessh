@@ -4,11 +4,11 @@ hostKey:
 replicaCount: 1
 
 image:
-  repository: yuvipanda/kubessh-kubessh
-  tag: set-by-chartpress
+  repository: prasunanand/kubessh-kubessh
+  tag: latest
   pullPolicy: Always
 
-  name: yuvipanda/kubessh-kubessh
+  name: prasunanand/kubessh-kubessh
 service:
   type: LoadBalancer
   port: 22

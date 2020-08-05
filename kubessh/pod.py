@@ -7,6 +7,7 @@ import argparse
 import os
 import sys
 from kubernetes import client as k
+from kubernetes.client.models.v1_pod_security_context import V1PodSecurityContext
 import kubernetes.config
 import escapism
 import functools
@@ -61,8 +62,8 @@ class UserPod(LoggingConfigurable):
                     }
                 ],
                 "securityContext": {
-                    "fsgroup": 0
-                    "runAsGroup": 0
+                    "fsgroup": 0,
+                    "runAsGroup": 0,
                     "runAsUser": 0,
                 },
             },
@@ -114,8 +115,8 @@ class UserPod(LoggingConfigurable):
         """,
     )
 
-    user_mappings = List(
-        [],
+    user_mappings = Dict(
+        None,
         help="""
         List of templates for detecting user group for running in SecurityContext.
         """,
@@ -183,17 +184,20 @@ class UserPod(LoggingConfigurable):
 
     def make_pod_spec(self):
         pod = make_api_object_from_dict(self._expand_all(self.pod_template), k.V1Pod)
-        pod.spec.securityContext = {}
-        if self.user_mappings is not None:
-            pod.spec.securityContext['fsgroup'] = self.user_mappings[self.username]['fsgroup']
-            pod.spec.securityContext['runAsGroup'] = self.user_mappings[self.username]['runAsGroup']
-            pod.spec.securityContext['runAsUser'] = self.user_mappings[self.username]['runAsUser']
+
+        # if self.user_mappings is not None:
+        security_context = V1PodSecurityContext()
+        security_context.fs_group = int(self.user_mappings[self.username]['gid'])
+        security_context.run_as_group = int(self.user_mappings[self.username]['gid'])
+        security_context.run_as_user = int(self.user_mappings[self.username]['uid'])
+
         pod.metadata.name = self.pod_name
 
         if pod.metadata.labels is None:
             pod.metadata.labels = {}
         pod.metadata.labels.update(self.required_labels)
-
+        pod.spec.security_context = security_context
+        
         return pod
 
     def make_pvc_spec(self, template):
